@@ -1,0 +1,281 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 180 Project 5: Neural Radiance Field</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+<body>
+
+    <h1 align="middle">CS 180: Intro to Computer Vision and Computational Photography, Fall 2023</h1>
+    <h2 align="middle">Project 5: Neural Radiance Fields (NeRF)</h2>
+    <h3 align="middle">Mylinh Vu</h3>
+    
+    <h2 align="middle">Part 1 Overview: Fit a Neural Field to a 2D Image</h2>
+    <p>To implement this neural field, it starts with a multilayer perceptron (mlp) model that has sinusoidal positional encoding. The model has intertwined, connected hidden layers that use ReLU activates and a final sigmoid layer. The input is in the form of 2D pixel coordinates and outputs the corresponding 3D pixel colors. The hidden layers in the model allow the dimensions to change throughout it and train the values to adjust to it. This architecture allows for changes to be made with the number of layers, the channel sizes, and the max frequency for the positional encoding which leads to different images being produced in the model training.</p>
+    <p>In order to handle higher resolution images more efficiently, a custom dataloader was implemented that was able to randomly sample various pixel coordinates and their corresponding color values while the model is being trained. For our calculations, we also have to normalize all the pixels and colors to be between 0 and 1. For our loss function, we use the mean square error funtion (mse) and we utilize an adam optimizer so the model can be more efficient. The default training loop I used runs for 1000 iterations with the batch size of 10,000. In order to track the signaling and evaluate the success of the model, we calculate the peak signal-to-noise ratio (psnr) which utilizes the mse predicted values and the true values from the original image. With the different variables, we can also use hypertuning to produce different images throughout the training process as it can affect the neural network's success in predicting the image.</p>
+
+    <h2 align="middle">Fox Image Process with L=10, hidden layers = 3, learning rate = .01</h2>
+    <table width="100%">
+        <tr>
+            <td>
+                <img src="images/fox_output/longer_epoch/fox0.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/longer_epoch/fox1.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/longer_epoch/fox2.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="images/fox_output/longer_epoch/fox3.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/longer_epoch/fox20.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/longer_epoch/fox1400.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+    </table>
+
+    <h2 align="middle">Fox Image Process with L=3, hidden layers = 3, learning rate = .01</h2>
+    <table width="100%">
+        <tr>
+            <td>
+                <img src="images/fox_output/fox_3_3_256_0.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/fox_3_3_256_1.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/fox_3_3_256_2.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="images/fox_output/fox_3_3_256_3.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/fox_3_3_256_9.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/fox_3_3_256_14.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+    </table>
+
+    <h2 align="middle">Fox Image Process with L=10, hidden layers = 3, learning rate = .0001</h2>
+    <table width="100%">
+        <tr>
+            <td>
+                <img src="images/fox_output/lr=.0001/fox_10_3_256_lr=.0001_0.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/lr=.0001/fox_10_3_256_lr=.0001_1.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/lr=.0001/fox_10_3_256_lr=.0001_2.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="images/fox_output/lr=.0001/fox_10_3_256_lr=.0001_3.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/lr=.0001/fox_10_3_256_lr=.0001_9.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/fox_output/lr=.0001/fox_10_3_256_lr=.0001_14.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+    </table>
+
+
+    <h2 align="middle">Hyperparameters and PSNR Plots</h2>
+    <table width="100%">
+        <tr>
+            <td>
+                <img src="images/fox_output/longer_epoch/fox1400.jpg" align="middle" width="400px"/>
+                <figcaption align="middle">L = 10, hidden layers = 3, lr = .01</figcaption>
+            </td>
+            <td>
+                <img src="images/psnr/PSNR_plot_10_3_256.png" align="middle" width="400px"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="images/fox_output/fox_10_10_256_14.jpg" align="middle" width="400px"/>
+                <figcaption align="middle">L = 10, hidden layers = 10, lr = .01</figcaption>
+            </td>
+            <td>
+                <img src="images/psnr/PSNR_plot_10_10_256.png" align="middle" width="400px"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="images/fox_output/fox_3_3_256_14.jpg" align="middle" width="400px"/>
+                <figcaption align="middle">L = 3, hidden layers = 3, lr = .01</figcaption>
+            </td>
+            <td>
+                <img src="images/psnr/PSNR_plot_3_3_256.png" align="middle" width="400px"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="images/fox_output/lr=.0001/fox_10_3_256_lr=.0001_14.jpg" align="middle" width="400px"/>
+                <figcaption align="middle">L = 10, hidden layers = 3, lr = .0001</figcaption>
+            </td>
+            <td>
+                <img src="images/psnr/PSNR_plot_10_3_256_lr=.0001.png" align="middle" width="400px"/>
+            </td>
+        </tr>
+    </table>
+
+    <h2 align="middle">Pbro Image Process with L=10, hidden layers = 3, learning rate = .01</h2>
+    <table width="100%">
+        <tr>
+            <td>
+                <img src="images/pbros_output/longer_epoch/pbros0.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/pbros_output/longer_epoch/pbros1.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/pbros_output/longer_epoch/pbros2.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="images/pbros_output/longer_epoch/pbros3.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/pbros_output/longer_epoch/pbros20.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/pbros_output/longer_epoch/pbros1400.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+    </table>
+
+    <h2 align="middle">Pbro Image Process with L=3, hidden layers = 3, learning rate = .01</h2>
+    <table width="100%">
+        <tr>
+            <td>
+                <img src="images/pbros_output/pbros_L3_0.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/pbros_output/pbros_L3_1.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/pbros_output/pbros_L3_2.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="images/pbros_output/pbros_L3_3.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/pbros_output/pbros_L3_10.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/pbros_output/pbros_L3_15.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+    </table>
+
+    <h2 align="middle">Hyperparameters and PSNR Plots</h2>
+    <table width="100%">
+        <tr>
+            <td>
+                <img src="images/pbros_output/longer_epoch/pbros1400.jpg" align="middle" width="400px"/>
+                <figcaption align="middle">L = 10, hidden layers = 3, lr = .01</figcaption>
+            </td>
+            <td>
+                <img src="images/psnr/PSNR_plot_pbros_longer.png" align="middle" width="400px"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="images/pbros_output/pbros_L3_15.jpg" align="middle" width="400px"/>
+                <figcaption align="middle">L = 3, hidden layers = 3, lr = .01</figcaption>
+            </td>
+            <td>
+                <img src="images/psnr/PSNR_plot_pbros_L3.png" align="middle" width="400px"/>
+            </td>
+        </tr>
+    </table>
+
+    <h2 align="middle">Part 2 Overview: Fit a Neural Radiance Field from Multi-view Images</h2>
+
+    <p>For the transforming coordinates section, I implemented various transforms functions from camera space to world space in utilizing the camera-to-world transformatin matrix. In order to go from pixel to camera, I utilized the camera intrinsic matric. Additionally, there is the pixel to ray functionality that utilizes the origin and normalized direction ofthe ray to be able to convert between the pixel and the ray. </p>
+
+    <p>For the sampling section, I utilize the dataloader to get sample rays from multiple images. The pixel coordinates are then converted using the camera intrinsics and extrinsics to get the respective rays. Here, i use global sampling to flatten all the images and get the rays from flattening the pixels. Once I am able to calculate all of the rays, then I utilize the perturbation to sample points along the ray. This allows for some variability to be introduced while the model is being trained.</p>
+
+    <p>For the dataloader integration, it utilizes some implementation from part 1 that uses a similar dataloader to randomly sample pixels from multiple images. These pixels are converted into rays where the dataloader returns the ray origin, its direction, and the corresponding pixel colors which are all essential in being able to visualize the images and rays. Here, we can use the viser package to visualize the code to check the correctness of the images and the ray calculations.</p>
+
+    <p>In this part, the neural raidance field network gets built as a neural network model with an architecture consisting of another mlp with 2 inputs of 3D world coordinates and another 3D vector as ray direction. What the model outputs is the color and density predictions of the image which are calculated and constrained by the sigmoid function and the relu activates. The ray direction uses positional encoding to encode the values and the input is also utilized in the model as it is placed in the middle of the model through concatenation to get the final adjusted image.</p>
+
+    <p>For the final part with volume rendering, this equation calculates the rendered color from a batch of samples from a ray that approximizes values along small intervals on the ray. It takes the sums of these approximations to produce the results. To get the rendering, it utilizes backpropagation with the volume rendering equation provided which helps train the network and we can use testing code to ensure the volume gets produced as expected.</p>
+
+    <h2 align="middle">Ray Visualizations</h2>
+    <table width="100%">
+        <tr>
+            <td>
+                <img src="images/viser1.png" align="middle" width="400px"/>
+            </td>
+            <td>
+                <img src="images/viser2.png" align="middle" width="400px"/>
+            </td>
+        </tr>
+    </table>
+
+    <h2 align="middle">Lego Training Iterations</h2>
+    <table width="100%">
+        <tr>
+            <td>
+                <img src="images/lego_output/model0.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/lego_output/model1.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/lego_output/model2.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="images/lego_output/model3.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/lego_output/model13.jpg" align="middle" width="250px"/>
+            </td>
+            <td>
+                <img src="images/lego_output/model19.jpg" align="middle" width="250px"/>
+            </td>
+        </tr>
+    </table>
+    <img src="images/psnr/PSNR_plot_truck.png" align="middle" width="400px"/>
+    <figcaption align="middle">PSNR Plot</figcaption>
+
+    <h2 align="middle">Spherical Rendering</h2>
+    <img src="images/lego.gif" align="middle" width="500px">
+
+</body>
